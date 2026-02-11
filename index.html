@@ -1,3 +1,83 @@
-Documento de Vega
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV PRO - Vincular Lista</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #141414; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1f1f1f; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; border: 1px solid #333; }
+        h2 { color: #E50914; margin-top: 0; }
+        p { color: #888; font-size: 0.9rem; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: white; font-size: 1rem; box-sizing: border-box; }
+        input:focus { border-color: #E50914; outline: none; }
+        button { width: 100%; padding: 15px; border-radius: 10px; border: none; background: #E50914; color: white; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        button:active { transform: scale(0.98); }
+        #status { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-ai_studio_code (30).html
+<div class="card">
+    <h2>Vincular con TV</h2>
+    <p>Introduce el código que ves en tu televisor y pega la URL de tu lista M3U.</p>
+    
+    <input type="number" id="tv-code" placeholder="Código de 6 dígitos">
+    <hr style="border: 0.5px solid #333; margin: 20px 0;">
+    <input type="text" id="list-name" placeholder="Nombre (Ej: Mi Lista PE)">
+    <input type="text" id="list-url" placeholder="http://servidor.net/lista.m3u">
+    
+    <button onclick="enviarDatos()">ENVIAR A LA TV</button>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+    // Al abrir el link, si hay un código en la URL (?id=123456), lo pone solo
+    const params = new URLSearchParams(window.location.search);
+    if(params.has('id')) {
+        document.getElementById('tv-code').value = params.get('id');
+    }
+
+    async function enviarDatos() {
+        const code = document.getElementById('tv-code').value;
+        const name = document.getElementById('list-name').value;
+        const url = document.getElementById('list-url').value;
+        const status = document.getElementById('status');
+
+        if(!code || !url) {
+            alert("Por favor, pon el código y la URL.");
+            return;
+        }
+
+        status.innerText = "Conectando con la TV...";
+        status.style.color = "orange";
+
+        // URL DE TU BASE DE DATOS FIREBASE
+        const fbURL = `https://iptv-puente-default-rtdb.firebaseio.com/codes/${code}.json`;
+
+        try {
+            const response = await fetch(fbURL, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    name: name || "Lista Remota",
+                    url: url,
+                    timestamp: Date.now()
+                })
+            });
+
+            if(response.ok) {
+                status.innerText = "¡ENVIADO! Mira tu televisor.";
+                status.style.color = "#2ecc71";
+            } else {
+                throw new Error();
+            }
+        } catch(e) {
+            status.innerText = "Error de conexión. Revisa el código.";
+            status.style.color = "#e74c3c";
+        }
+    }
+</script>
+
+</body>
+</html>
