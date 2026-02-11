@@ -7,13 +7,13 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #141414; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: #1f1f1f; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; border: 1px solid #333; }
-        h2 { color: #E50914; margin-top: 0; }
-        p { color: #888; font-size: 0.9rem; }
+        h2 { color: #E50914; margin-top: 0; text-align: center; }
+        p { color: #888; font-size: 0.9rem; text-align: center; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: white; font-size: 1rem; box-sizing: border-box; }
         input:focus { border-color: #E50914; outline: none; }
         button { width: 100%; padding: 15px; border-radius: 10px; border: none; background: #E50914; color: white; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; }
         button:active { transform: scale(0.98); }
-        #status { margin-top: 15px; font-weight: bold; }
+        #status { margin-top: 15px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
@@ -33,20 +33,23 @@
 </div>
 
 <script>
-    // Al abrir el link, si hay un código en la URL (?id=123456), lo pone solo
-    const params = new URLSearchParams(window.location.search);
-    if(params.has('id')) {
-        document.getElementById('tv-code').value = params.get('id');
-    }
+    // 1. Detectar si hay un ID en la URL al cargar la página
+    document.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        if(params.has('id')) {
+            document.getElementById('tv-code').value = params.get('id');
+        }
+    });
 
+    // 2. Función para enviar datos a Firebase
     async function enviarDatos() {
-        const code = document.getElementById('tv-code').value;
-        const name = document.getElementById('list-name').value;
-        const url = document.getElementById('list-url').value;
+        const code = document.getElementById('tv-code').value.trim();
+        const name = document.getElementById('list-name').value.trim();
+        const url = document.getElementById('list-url').value.trim();
         const status = document.getElementById('status');
 
         if(!code || !url) {
-            alert("Por favor, pon el código y la URL.");
+            alert("Por favor, ingresa el código de la TV y la URL de la lista.");
             return;
         }
 
@@ -54,11 +57,15 @@
         status.style.color = "orange";
 
         // URL DE TU BASE DE DATOS FIREBASE
+        // Asegúrate de que esta URL sea la correcta de tu proyecto
         const fbURL = `https://iptv-puente-default-rtdb.firebaseio.com/codes/${code}.json`;
 
         try {
             const response = await fetch(fbURL, {
                 method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     name: name || "Lista Remota",
                     url: url,
@@ -69,10 +76,14 @@
             if(response.ok) {
                 status.innerText = "¡ENVIADO! Mira tu televisor.";
                 status.style.color = "#2ecc71";
+                
+                // Opcional: Limpiar campos tras envío exitoso
+                // document.getElementById('list-url').value = '';
             } else {
-                throw new Error();
+                throw new Error("Error en la respuesta del servidor");
             }
         } catch(e) {
+            console.error(e);
             status.innerText = "Error de conexión. Revisa el código.";
             status.style.color = "#e74c3c";
         }
